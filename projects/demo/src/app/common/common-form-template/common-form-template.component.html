@@ -1,0 +1,85 @@
+<form *ngIf="isReady" [formGroup]="form">
+    <ng-container *ngFor="let elem of formFrame.elements">
+
+        <ng-container *ngIf="getElementInstance(elem); let elem">
+            <div *ngTemplateOutlet="elementsTemp; context: { parent: form, elem: elem, key: elem.key }"></div>
+        </ng-container>
+
+        <ng-container *ngIf="getGroupInstance(elem); let group">
+            <div
+                [ngClass]="group.configs?.classList"
+                [formArrayName]="group.key"
+            >
+                <label *ngIf="group.configs?.label">{{ group.configs.label }}</label>
+                <ng-container *ngFor="let elem of group.elements; let idx = index;">
+                    <div *ngTemplateOutlet="elementsTemp; context: { parent: form.get(group.key), elem: elem, key: [idx] }"></div>
+                </ng-container>
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="getCollectionInstance(elem); let collection">
+            <div
+                [ngClass]="collection.configs?.classList"
+                [formGroupName]="collection.key"
+            >
+                <label *ngIf="collection.configs?.label">{{ collection.configs.label }}</label>
+                <ng-container *ngFor="let item of collection.elements">
+                    <ng-container *ngIf="getElementInstance(item); let elem">
+                        <div *ngTemplateOutlet="elementsTemp; context: { parent: form.get(collection.key), elem: elem, key: elem.key }"></div>
+                    </ng-container>
+                    <ng-container *ngIf="getGroupInstance(item); let group">
+                        <div
+                            [ngClass]="group.configs?.classList"
+                            [formArrayName]="group.key"
+                        >
+                            <label *ngIf="group.configs?.label">{{ group.configs.label }}</label>
+                            <ng-container *ngFor="let elem of group.elements; let idx = index;">
+                                <div *ngTemplateOutlet="elementsTemp; context: { parent: form.get([collection.key, group.key]), elem: elem, key: [idx] }"></div>
+                            </ng-container>
+                        </div>
+                    </ng-container>
+                </ng-container>
+            </div>
+        </ng-container>
+
+    </ng-container>
+</form>
+
+<ng-template #elementsTemp let-parent="parent" let-elem="elem" let-key="key">
+    <ng-container *ngIf="!elem.configs?.hidden">
+
+        <label *ngIf="elem.configs?.label">{{ elem.configs.label }}</label>
+
+        <ng-container *ngIf="elem.elementType === elementType.INPUT_TEXT">
+            <input type="text"
+                [ngClass]="elem.configs?.classList"
+                [formControl]="parent.get(key)"
+                placeholder="{{ elem.configs?.placeholder }}"
+            />
+        </ng-container>
+
+        <ng-container *ngIf="elem.elementType === elementType.INPUT_EMAIL">
+            <input type="email"
+                [ngClass]="elem.configs?.classList"
+                [formControl]="parent.get(key)"
+                placeholder="{{ elem.configs?.placeholder }}"
+            />
+        </ng-container>
+
+        <ng-container *ngIf="elem.elementType === elementType.INPUT_PASSWORD">
+            <input type="password"
+                [ngClass]="elem.configs?.classList"
+                [formControl]="parent.get(key)"
+                placeholder="{{ elem.configs?.placeholder }}"
+            />
+        </ng-container>
+
+        <ng-container *ngIf="elem.elementType === elementType.INPUT_CHECKBOX">
+            <input type="checkbox"
+                [ngClass]="elem.configs?.classList"
+                [formControl]="parent.get(key)"
+            />
+        </ng-container>
+
+    </ng-container>
+</ng-template>

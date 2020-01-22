@@ -269,6 +269,7 @@ export class FormFrame {
         targetModels.forEach(model => {
             model.configs.hidden = Boolean(condition);
         });
+        this.doDisabled(targets, condition);
     }
 
     /**

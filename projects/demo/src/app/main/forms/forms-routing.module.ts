@@ -5,7 +5,11 @@ import { Routes, RouterModule } from '@angular/router';
 const routes: Routes = [
     {
         path: 'builder',
-        loadChildren: () => import('./form-builder-demo/form-builder-demo.module').then(mode => mode.FormBuilderDemoModule)
+        loadChildren: () => import('./form-builder-demo/form-builder-demo.module').then(mod => mod.FormBuilderDemoModule)
+    },
+    {
+        path: 'long',
+        loadChildren: () => import('./long-form-demo/long-form-demo.module').then(mod => mod.LongFormDemoModule)
     }
 ];
 

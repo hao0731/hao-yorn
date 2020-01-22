@@ -1,0 +1,163 @@
+<form *ngIf="isReady" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="row">
+        <ng-container *ngFor="let elem of formFrame.elements">
+
+            <ng-container *ngIf="getElementInstance(elem); let elem">
+                <div *ngTemplateOutlet="elementsTemp; context: { parent: form, elem: elem, key: elem.key, parentKey: 'frame' }"></div>
+            </ng-container>
+
+            <ng-container *ngIf="getGroupInstance(elem); let group">
+                <div
+                    [ngClass]="group.configs?.classList"
+                    [formArrayName]="group.key"
+                >
+                    <label *ngIf="group.configs?.label">{{ group.configs.label }}</label>
+                    <ng-container *ngFor="let elem of group.elements; let idx = index;">
+                        <div *ngTemplateOutlet="elementsTemp; context: { parent: form.get(group.key), elem: elem, key: [idx], parentKey:group.key  }"></div>
+                    </ng-container>
+                </div>
+            </ng-container>
+
+            <ng-container *ngIf="getCollectionInstance(elem); let collection">
+                <div
+                    [ngClass]="collection.configs?.classList"
+                    [formGroupName]="collection.key"
+                >
+                    <label *ngIf="collection.configs?.label">{{ collection.configs.label }}</label>
+                    <ng-container *ngFor="let item of collection.elements">
+                        <ng-container *ngIf="getElementInstance(item); let elem">
+                            <div *ngTemplateOutlet="elementsTemp; context: { parent: form.get(collection.key), elem: elem, key: elem.key, parentKey: collection.key }"></div>
+                        </ng-container>
+                        <ng-container *ngIf="getGroupInstance(item); let group">
+                            <div
+                                [ngClass]="group.configs?.classList"
+                                [formArrayName]="group.key"
+                            >
+                                <label *ngIf="group.configs?.label">{{ group.configs.label }}</label>
+                                <ng-container *ngFor="let elem of group.elements; let idx = index;">
+                                    <div *ngTemplateOutlet="elementsTemp; context: { parent: form.get([collection.key, group.key]), elem: elem, key: [idx], parentKey: (collection.key + '_' + group.key) }"></div>
+                                </ng-container>
+                            </div>
+                        </ng-container>
+                    </ng-container>
+                </div>
+            </ng-container>
+
+        </ng-container>
+    </div>
+
+    <div class="mt-3 text-center">
+        <button class="btn btn-primary" [disabled]="form.invalid">Submit</button>
+    </div>
+
+</form>
+
+<ng-template #elementsTemp let-parent="parent" let-elem="elem" let-key="key" let-parentKey="parentKey">
+    <ng-container *ngIf="!elem.configs?.hidden">
+
+        <ng-container *ngIf="elem.elementType === elementType.INPUT_TEXT">
+            <div class="form-group row" [ngClass]="elem.configs?.classList">
+                <label
+                    class="col-sm-2 col-form-label"
+                    for="{{ parentKey + '_' + elem.key }}"
+                >
+                    {{ elem.configs.label }}
+                </label>
+                <div class="col-sm-10">
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="{{ parentKey + '_' + elem.key }}"
+                        placeholder="{{ elem.configs?.placeholder }}"
+                        [formControl]="parent.get(key)"
+                    />
+                </div>
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="elem.elementType === elementType.INPUT_EMAIL">
+            <div class="form-group row" [ngClass]="elem.configs?.classList">
+                <label
+                    class="col-sm-2 col-form-label"
+                    for="{{ parentKey + '_' + elem.key }}"
+                >
+                    {{ elem.configs.label }}
+                </label>
+                <div class="col-sm-10">
+                    <input
+                        type="email"
+                        class="form-control"
+                        id="{{ parentKey + '_' + elem.key }}"
+                        placeholder="{{ elem.configs?.placeholder }}"
+                        [formControl]="parent.get(key)"
+                    />
+                </div>
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="elem.elementType === elementType.INPUT_PASSWORD">
+            <div class="form-group row" [ngClass]="elem.configs?.classList">
+                <label
+                    class="col-sm-2 col-form-label"
+                    for="{{ parentKey + '_' + elem.key }}"
+                >
+                    {{ elem.configs.label }}
+                </label>
+                <div class="col-sm-10">
+                    <input
+                        type="password"
+                        class="form-control"
+                        id="{{ parentKey + '_' + elem.key }}"
+                        placeholder="{{ elem.configs?.placeholder }}"
+                        [formControl]="parent.get(key)"
+                    />
+                </div>
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="elem.elementType === elementType.INPUT_NUMBER">
+            <div class="form-group row" [ngClass]="elem.configs?.classList">
+                <label
+                    class="col-sm-2 col-form-label"
+                    for="{{ parentKey + '_' + elem.key }}"
+                >
+                    {{ elem.configs.label }}
+                </label>
+                <div class="col-sm-10">
+                    <input
+                        type="number"
+                        class="form-control"
+                        id="{{ parentKey + '_' + elem.key }}"
+                        placeholder="{{ elem.configs?.placeholder }}"
+                        [formControl]="parent.get(key)"
+                    />
+                </div>
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="elem.elementType === elementType.INPUT_CHECKBOX">
+            <div class="row">
+                <label
+                    class="col-sm-2 col-form-label"
+                    for="{{ parentKey + '_' + elem.key }}"
+                >
+                    {{ elem.configs.label }}
+                </label>
+                <div class="col-sm-10">
+                    <div class="form-check" [ngClass]="elem.configs?.classList">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            id="{{ parentKey + '_' + elem.key }}"
+                            [formControl]="parent.get(key)"
+                        />
+                        <label class="form-check-label" for="{{ parent?.key + '_' + elem.key }}">
+                        {{ elem.configs.placeholder }}
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+
+    </ng-container>
+</ng-template>

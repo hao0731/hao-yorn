@@ -186,21 +186,19 @@ export class FormFrame {
     /**
      * Let targets' value be based on base's value.
      * @param values form rawValues.
-     * @param info include baseModel, targetModels, targetMaps, baseVal, preBaseVal.
+     * @param info include baseModel, targetModels, targetMaps, baseVal.
      */
     private doOneWayBinding(values: any, info: any): void {
-        const { baseModel, targetModels, targetMaps, baseVal, preBaseVal } = info;
-        if ( !_.isEqual(baseVal, preBaseVal) ) {
-            baseModel.value = baseVal;
-            targetMaps.forEach((m, idx) => {
-                let newValue = baseVal;
-                if ( baseModel instanceof FormElementCollection && targetModels[idx] instanceof FormElementCollection ) {
-                    newValue = this.exceptFilter(_.get(values, m), baseVal);
-                }
-                _.set(values, m, newValue);
-                targetModels[idx].value = newValue;
-            });
-        }
+        const { baseModel, targetModels, targetMaps, baseVal } = info;
+        baseModel.value = baseVal;
+        targetMaps.forEach((m, idx) => {
+            let newValue = baseVal;
+            if ( baseModel instanceof FormElementCollection && targetModels[idx] instanceof FormElementCollection ) {
+                newValue = this.exceptFilter(_.get(values, m), baseVal);
+            }
+            _.set(values, m, newValue);
+            targetModels[idx].value = newValue;
+        });
     }
 
     /**
@@ -214,25 +212,50 @@ export class FormFrame {
             this.doOneWayBinding(values, info);
         } else {
             const changeTargetIdx = targetMaps.findIndex(m => !_.isEqual(_.get(values, m), _.get(this.preValues, m)));
-            if ( changeTargetIdx === -1 ) { return; }
+
+            if ( changeTargetIdx === -1 ) {
+                this.doOneWayBinding(values, info);
+                return;
+            }
 
             const val = _.get(values, targetMaps[changeTargetIdx]);
+            const preVal = _.get(this.preValues, targetMaps[changeTargetIdx]);
+
             const isCollectionTarget = targetModels[changeTargetIdx] instanceof FormElementCollection;
+
+            let changeProperty = null;
+            if ( isCollectionTarget ) {
+                Object.keys(val).forEach(key => {
+                    if ( !_.isEqual(val[key], preVal[key]) ) {
+                        changeProperty = key;
+                    }
+                });
+            }
 
             let newValue = val;
             if ( baseModel instanceof FormElementCollection && isCollectionTarget ) {
-                newValue = this.exceptFilter(baseVal, val);
+                const noProperty = changeProperty ? !baseVal.hasOwnProperty(changeProperty) : false;
+                if ( noProperty ) {
+                    Object.keys(baseVal).forEach(key => {
+                        if ( val.hasOwnProperty(key) ) {
+                            val[key] = baseVal[key];
+                        }
+                    });
+                }
+                newValue = this.exceptFilter(baseVal, val, noProperty);
             }
 
             _.set(values, baseMap, newValue);
+            baseModel.value = _.cloneDeep(newValue);
 
             targetMaps.forEach((m: any, idx: number) => {
-                if ( changeTargetIdx === idx ) { return; }
                 newValue = val;
-                if ( targetModels[idx] instanceof FormElementCollection && isCollectionTarget ) {
-                    newValue = this.exceptFilter(_.get(values, m), val);
+                if ( targetModels[idx] instanceof FormElementCollection && isCollectionTarget && idx !== changeTargetIdx ) {
+                    const targetVal = this.form.get(m).value;
+                    const noProperty = changeProperty ? !targetVal.hasOwnProperty(changeProperty) : false;
+                    newValue = this.exceptFilter(_.get(values, m), val, noProperty);
                 }
-                _.set(values, baseMap, newValue);
+                _.set(values, m, newValue);
                 targetModels[idx].value = newValue;
             });
         }
@@ -336,15 +359,16 @@ export class FormFrame {
      * Let the fields in origin value refer to the values of the same fields in ref value.
      * @param origin origin value.
      * @param ref Reference value.
+     * @param noProperty The change value's property doesn't include in origin.
      */
-    private exceptFilter(origin: any, ref: any): any {
+    private exceptFilter(origin: any, ref: any, noProperty = false): any {
         const originLen = Object.keys(origin).length;
         const refLen = Object.keys(ref).length;
         const result = {};
 
         if ( originLen < refLen ) {
             Object.keys(origin).forEach(key => {
-                result[key] = ref[key];
+                result[key] = noProperty ? origin[key] : ref[key];
             });
         } else {
             Object.assign(result, origin, ref);

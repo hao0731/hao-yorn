@@ -42,6 +42,13 @@ export class LongFormDemoComponent extends CommonFormTemplateComponent {
                 targets: [['third-collection']],
                 method: RelationMethod.TWO_WAY_BINDING,
                 conditionFunc: () => this.form.get(['third-collection', 'sameAs']).value
+            },
+            {
+                idx: 3,
+                base: ['forth-collection', 'address'],
+                targets: [['forth-collection', 'contactAddress']],
+                method: RelationMethod.TWO_WAY_BINDING,
+                conditionFunc: () => this.form.get(['forth-collection', 'sameAs']).value
             }
         ];
         this.formFrame.setFieldRelations(relationList);

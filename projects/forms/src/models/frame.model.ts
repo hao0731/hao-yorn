@@ -208,29 +208,16 @@ export class FormFrame {
      */
     private doTwoWayBinding(values: any, info: any): void {
         const { baseModel, targetModels, baseMap, targetMaps, baseVal, preBaseVal } = info;
-        if ( !_.isEqual(baseVal, preBaseVal) ) {
+        const changeTargetIdx = targetMaps.findIndex((m: string[]) => !_.isEqual(_.get(values, m), _.get(this.preValues, m)));
+
+        if ( !_.isEqual(baseVal, preBaseVal) || changeTargetIdx === -1 ) {
             this.doOneWayBinding(values, info);
         } else {
-            const changeTargetIdx = targetMaps.findIndex(m => !_.isEqual(_.get(values, m), _.get(this.preValues, m)));
-
-            if ( changeTargetIdx === -1 ) {
-                this.doOneWayBinding(values, info);
-                return;
-            }
-
             const val = _.get(values, targetMaps[changeTargetIdx]);
             const preVal = _.get(this.preValues, targetMaps[changeTargetIdx]);
 
             const isCollectionTarget = targetModels[changeTargetIdx] instanceof FormElementCollection;
-
-            let changeProperty = null;
-            if ( isCollectionTarget ) {
-                Object.keys(val).forEach(key => {
-                    if ( !_.isEqual(val[key], preVal[key]) ) {
-                        changeProperty = key;
-                    }
-                });
-            }
+            const changeProperty = isCollectionTarget ? Object.keys(val).find(key => !_.isEqual(val[key], preVal[key])) : null;
 
             let newValue = val;
             if ( baseModel instanceof FormElementCollection && isCollectionTarget ) {

@@ -191,11 +191,10 @@ export class FormFrame {
     private doOneWayBinding(values: any, info: any): void {
         const { baseModel, targetModels, targetMaps, baseVal } = info;
         baseModel.value = baseVal;
-        targetMaps.forEach((m, idx) => {
-            let newValue = baseVal;
-            if ( baseModel instanceof FormElementCollection && targetModels[idx] instanceof FormElementCollection ) {
-                newValue = this.exceptFilter(_.get(values, m), baseVal);
-            }
+        targetMaps.forEach((m: string[], idx: number) => {
+            const newValue = baseModel instanceof FormElementCollection && targetModels[idx] instanceof FormElementCollection
+                ? this.matchCollectionData(_.get(values, m), baseVal)
+                : baseVal;
             _.set(values, m, newValue);
             targetModels[idx].value = newValue;
         });
@@ -215,35 +214,30 @@ export class FormFrame {
         } else {
             const val = _.get(values, targetMaps[changeTargetIdx]);
             const preVal = _.get(this.preValues, targetMaps[changeTargetIdx]);
-
             const isCollectionTarget = targetModels[changeTargetIdx] instanceof FormElementCollection;
-            const changeProperty = isCollectionTarget ? Object.keys(val).find(key => !_.isEqual(val[key], preVal[key])) : null;
+            const changeProperty = Object.keys(val).find(key => !_.isEqual(val[key], preVal[key]));
 
             let newValue = val;
             if ( baseModel instanceof FormElementCollection && isCollectionTarget ) {
-                const noProperty = changeProperty ? !baseVal.hasOwnProperty(changeProperty) : false;
-                if ( noProperty ) {
+                if ( changeProperty && !baseVal.hasOwnProperty(changeProperty) ) {
                     Object.keys(baseVal).forEach(key => {
                         if ( val.hasOwnProperty(key) ) {
                             val[key] = baseVal[key];
                         }
                     });
                 }
-                newValue = this.exceptFilter(baseVal, val, noProperty);
+                newValue = this.matchCollectionData(baseVal, val);
             }
 
             _.set(values, baseMap, newValue);
             baseModel.value = _.cloneDeep(newValue);
 
-            targetMaps.forEach((m: any, idx: number) => {
-                newValue = val;
-                if ( targetModels[idx] instanceof FormElementCollection && isCollectionTarget && idx !== changeTargetIdx ) {
-                    const targetVal = this.form.get(m).value;
-                    const noProperty = changeProperty ? !targetVal.hasOwnProperty(changeProperty) : false;
-                    newValue = this.exceptFilter(_.get(values, m), val, noProperty);
-                }
+            targetMaps.forEach((m: string[], idx: number) => {
+                newValue = targetModels[idx] instanceof FormElementCollection && isCollectionTarget && idx !== changeTargetIdx
+                    ? this.matchCollectionData(_.get(values, m), val)
+                    : val;
                 _.set(values, m, newValue);
-                targetModels[idx].value = newValue;
+                targetModels[idx].value = _.cloneDeep(newValue);
             });
         }
     }
@@ -257,12 +251,12 @@ export class FormFrame {
         const targetModels = targets.map(target => this.findElement(target));
         const targetMaps = targetModels.map(target => this.getModelMap(target));
         if ( condition ) {
-            targetMaps.forEach((m, idx) => {
+            targetMaps.forEach((m: string[], idx: number) => {
                 this.form.get(m).disable({ emitEvent: false });
                 targetModels[idx].configs.disabled = true;
             });
         } else {
-            targetMaps.forEach((m, idx) => {
+            targetMaps.forEach((m: string[], idx: number) => {
                 this.form.get(m).enable({ emitEvent: false });
                 targetModels[idx].configs.disabled = false;
             });
@@ -342,25 +336,17 @@ export class FormFrame {
         return map;
     }
 
+
     /**
-     * Let the fields in origin value refer to the values of the same fields in ref value.
+     * Let the fields in origin value refer to the values of the same fields in reference value.
      * @param origin origin value.
-     * @param ref Reference value.
-     * @param noProperty The change value's property doesn't include in origin.
+     * @param reference Reference value.
      */
-    private exceptFilter(origin: any, ref: any, noProperty = false): any {
-        const originLen = Object.keys(origin).length;
-        const refLen = Object.keys(ref).length;
+    private matchCollectionData(origin: any, reference: any): any {
         const result = {};
-
-        if ( originLen < refLen ) {
-            Object.keys(origin).forEach(key => {
-                result[key] = noProperty ? origin[key] : ref[key];
-            });
-        } else {
-            Object.assign(result, origin, ref);
-        }
-
+        Object.keys(origin).forEach(key => {
+            result[key] = reference.hasOwnProperty(key) ? reference[key] : origin[key];
+        });
         return result;
     }
 

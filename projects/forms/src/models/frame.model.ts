@@ -128,51 +128,7 @@ export class FormFrame {
      */
     private getFields(): any {
         const universal = {};
-        this.elements.forEach(model => {
-            if ( model instanceof FormElement ) {
-                const { key, value, configs } = (model as FormElement<any>);
-                universal[key] = new FormControl(
-                    { value, disabled: configs && configs.disabled },
-                    model.getValidations()
-                );
-            }
-            if ( model instanceof FormElementGroup ) {
-                const { key } = (model as FormElementGroup<any>);
-                universal[key] = new FormArray([]);
-                (model as FormElementGroup<any>).elements.forEach(elem => {
-                    universal[key].push(
-                        new FormControl(
-                            { value: elem.value, disabled: elem.configs && elem.configs.disabled },
-                            elem.getValidations()
-                        )
-                    );
-                });
-            }
-            if ( model instanceof FormElementCollection ) {
-                const { key } = (model as FormElementCollection);
-                const collection: any = {};
-                model.elements.forEach(elem => {
-                    if ( elem instanceof FormElement ) {
-                        collection[elem.key] = new FormControl(
-                            { value: elem.value, disabled: elem.configs && elem.configs.disabled },
-                            elem.getValidations()
-                        );
-                    }
-                    if ( elem instanceof FormElementGroup ) {
-                        collection[elem.key] = new FormArray([]);
-                        elem.elements.forEach(control => {
-                            collection[elem.key].push(
-                                new FormControl(
-                                    { value: control.value, disabled: control.configs && control.configs.disabled },
-                                    control.getValidations()
-                                )
-                            );
-                        });
-                    }
-                });
-                universal[key] = new FormGroup(collection);
-            }
-        });
+        this.elements.forEach(model => universal[model.key] = this.createFormControl(model));
         return universal;
     }
 

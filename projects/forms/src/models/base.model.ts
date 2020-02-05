@@ -26,6 +26,16 @@ export class ElementsBase extends ElementBase {
         this.elements = options.elements;
     }
 
+    public addElement(element: any): void {
+        this.elements.push(element);
+        this.sortElements();
+    }
+
+    public removeElement(key: string): void {
+        this.elements = this.elements.filter(x => x.key !== key);
+        this.sortElements();
+    }
+
     protected sortElements(): void {
         this.elements.sort((a, b) => a.idx - b.idx);
     }

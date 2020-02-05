@@ -1,4 +1,4 @@
-import { FormGroup, FormControl, FormArray } from '@angular/forms';
+import { FormGroup, FormControl, FormArray, AbstractControl } from '@angular/forms';
 
 import { Subject, Observable } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -81,6 +81,36 @@ export class FormFrame {
         this.changeRelationValue(this.form.getRawValue());
     }
 
+    public addElement(
+        element: FormElement<any> | FormElementGroup<any> | FormElementCollection,
+        target?: FormElementGroup<any> | FormElementCollection
+    ): void {
+
+        const checkValid = (
+            model: FormElement<any> | FormElementGroup<any> | FormElementCollection,
+            instances: any[]
+        ) => {
+            return instances.some(ins => model instanceof ins);
+        };
+
+        if ( !target ) {
+            const control = this.createFormControl(element);
+            this.form.addControl(element.key, control);
+            this.elements.push(element);
+        } else if ( target instanceof FormElementGroup && element instanceof FormElement ) {
+            const control = this.createFormControl(element);
+            const group = this.form.get(this.getModelMap(target));
+            (group as FormArray).push(control);
+            target.addElement(element);
+        } else if ( target instanceof FormElementCollection && checkValid(element, [FormElement, FormElementGroup]) ) {
+            const control = this.createFormControl(element);
+            const collection = this.form.get(this.getModelMap(target));
+            (collection as FormGroup).addControl(element.key, control);
+            target.addElement(element as any);
+        }
+        this.sortElements();
+    }
+
     /**
      * call this method when component destroyed.
      */
@@ -144,6 +174,36 @@ export class FormFrame {
             }
         });
         return universal;
+    }
+
+    private createFormControl(model: FormElement<any> | FormElementGroup<any> | FormElementCollection): AbstractControl {
+        const { configs } = model;
+        if ( model instanceof FormElement ) {
+            const value = (model as FormElement<any>).value;
+            const control = new FormControl(
+                { value, disabled: configs && configs.disabled },
+                model.getValidations()
+            );
+            return control;
+        }
+        if ( model instanceof FormElementGroup ) {
+            const group = new FormArray([]);
+            model.elements.forEach(elem => {
+                const control = new FormControl(
+                    { value: elem.value, disabled: elem.configs && elem.configs.disabled },
+                    elem.getValidations()
+                );
+                group.push(control);
+            });
+            return group;
+        }
+        if ( model instanceof FormElementCollection ) {
+            const collection = {};
+            model.elements.forEach(elem => {
+                collection[elem.key] = this.createFormControl(elem);
+            });
+            return new FormGroup(collection);
+        }
     }
 
     private sortElements(): void {

@@ -10,6 +10,10 @@ const routes: Routes = [
     {
         path: 'long',
         loadChildren: () => import('./long-form-demo/long-form-demo.module').then(mod => mod.LongFormDemoModule)
+    },
+    {
+        path: 'add',
+        loadChildren: () => import('./form-add-demo/form-add-demo.module').then(mod => mod.FormAddDemoModule)
     }
 ];
 

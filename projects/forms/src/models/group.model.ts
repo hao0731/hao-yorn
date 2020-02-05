@@ -13,13 +13,7 @@ export class FormElementGroup<T> extends ElementsBase {
     }
 
     public addElement(element: FormElement<T>): void {
-        this.elements.push(element);
-        this.sortElements();
-    }
-
-    public removeElement(key: string): void {
-        this.elements = this.elements.filter(x => x.key !== key);
-        this.sortElements();
+        super.addElement(element);
     }
 
 }

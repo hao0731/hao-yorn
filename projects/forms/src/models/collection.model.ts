@@ -13,4 +13,8 @@ export class FormElementCollection extends ElementsBase {
         this.setElementsParent(this);
     }
 
+    public addElement(element: FormElement<any> | FormElementGroup<any>): void {
+        super.addElement(element);
+    }
+
 }

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 
 import { cloneDeep } from 'lodash';
 
-import { FormFrame, ElementsBuilder, FormElement, FormElementCollection, FormElementGroup } from 'forms';
+import { FormFrame, ElementsBuilder, FormElement, FormElementCollection, FormElementGroup, IfRelation, RelationMethod } from 'forms';
 
 import { CommonFormTemplateComponent } from '../../../common/common-form-template/common-form-template.component';
 
@@ -30,6 +30,8 @@ export class FormAddDemoComponent extends CommonFormTemplateComponent {
         setTimeout(() => {
             this.addElement();
             this.addCollection();
+            this.defineRelation();
+            this.removeElement();
         });
     }
 
@@ -96,6 +98,25 @@ export class FormAddDemoComponent extends CommonFormTemplateComponent {
             }
         );
         this.formFrame.addElement(element);
+    }
+
+    private removeElement(): void {
+        const collection = this.formFrame.elements.find(x => x.key === 'newCollection') as FormElementCollection;
+        const group = collection.elements.find(x => x.key === 'newGroup') as FormElementGroup<string>;
+        const element = group.elements.find(x => x.idx === 1);
+        this.formFrame.removeElement(collection);
+    }
+
+    private defineRelation(): void {
+        const relationList: IfRelation[] = [
+            {
+                idx: 1,
+                base: ['newCollection', 'newInput'],
+                targets: [['first-collection', 'name']],
+                method: RelationMethod.TWO_WAY_BINDING
+            }
+        ];
+        this.formFrame.setFieldRelations(relationList);
     }
 
 }

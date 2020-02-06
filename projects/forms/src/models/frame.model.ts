@@ -70,17 +70,50 @@ export class FormFrame {
      * @param list Enter fields of relation params
      */
     public setFieldRelations(list: IfRelation[]): void {
-        list.forEach(relation => {
-            if ( !relation.conditionFunc ) {
-                relation.conditionFunc = () => {
-                    return true;
-                };
-            }
-        });
-        this.relationList = [...list];
+        list.forEach(relation => this.addFieldRelation(relation));
         this.changeRelationValue(this.form.getRawValue());
     }
 
+    /**
+     * Add a new field of relation.
+     * @param relation field of relation params.
+     * @param detect excute changeRelationValue.
+     */
+    public addFieldRelation(relation: IfRelation, detect?: boolean): void {
+        if ( !relation.conditionFunc ) {
+            relation.conditionFunc = () => {
+                return true;
+            };
+        }
+
+        this.relationList.push(relation);
+        this.relationList.sort((a, b) => a.idx - b.idx);
+
+        if ( detect ) {
+            this.changeRelationValue(this.form.getRawValue());
+        }
+    }
+
+    /**
+     * Remove specific element's relation.
+     * @param element The element that you want to remove relation.
+     */
+    public removeFieldRelation(element: FormElement<any> | FormElementGroup<any> | FormElementCollection): void {
+        const map = this.getModelMap(element);
+        if ( element instanceof FormElementGroup || element instanceof FormElementCollection ) {
+            element.elements.forEach(elem => this.removeFieldRelation(elem));
+        }
+        this.relationList = this.relationList.filter(relation => {
+            const { base, targets } = relation;
+            return !_.isEqual(map, base) && !Boolean(targets.find(x => _.isEqual(map, x)));
+        });
+    }
+
+    /**
+     * add a new element into target element.
+     * @param element The element model.
+     * @param target Add element to this element. The default element is FormFrame.
+     */
     public addElement(
         element: FormElement<any> | FormElementGroup<any> | FormElementCollection,
         target?: FormElementGroup<any> | FormElementCollection
@@ -113,6 +146,36 @@ export class FormFrame {
             const collection = this.form.get(this.getModelMap(target));
             (collection as FormGroup).addControl(element.key, control);
             target.addElement(element as any);
+        }
+        this.setElementsParent();
+        this.sortElements();
+    }
+
+    /**
+     * Remove specific element.
+     * @param element The element that you want to remove.
+     */
+    public removeElement(element: FormElement<any> | FormElementGroup<any> | FormElementCollection): void {
+        const parent = element.parent;
+        const targetMap = this.getModelMap(element);
+        const parentMap = targetMap.filter((x: string, idx: number) => idx < targetMap.length - 1);
+
+        this.removeFieldRelation(element);
+
+        if ( parentMap.length === 0 ) {
+            this.form.removeControl(element.key);
+            this.elements = this.elements.filter(x => x.key !== element.key);
+        } else {
+            const parentControl = this.form.get(parentMap);
+            if ( parentControl instanceof FormArray ) {
+                const elementIndex = (parent as FormElementGroup<any>).elements.findIndex(x => x.idx === element.idx);
+                parentControl.removeAt(elementIndex);
+                (parent as FormElementGroup<any>).removeElement(element.key);
+            }
+            if ( parentControl instanceof FormGroup ) {
+                parentControl.removeControl(element.key);
+                (parent as FormElementCollection).removeElement(element.key);
+            }
         }
         this.sortElements();
     }

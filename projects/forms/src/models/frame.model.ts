@@ -32,9 +32,7 @@ export class FormFrame {
         this.form = new FormGroup(this.getFields());
         this.preValues = this.form.getRawValue();
         options.detect = options.detect === undefined ? true : options.detect;
-        if ( options.detect ) {
-            this.launchDetection();
-        }
+        this.launchDetection(options.detect);
     }
 
     // =====================================================================================
@@ -362,16 +360,25 @@ export class FormFrame {
     }
 
     /**
-     * auto change relation fields' value.
+     * detect value change.
+     * @param detect detect change relation fields' value.
      */
-    private launchDetection(): void {
+    private launchDetection(detect: boolean): void {
         this.form.valueChanges.pipe(
             takeUntil(this.changeEnd$)
-        ).subscribe(() => this.changeRelationValue(this.form.getRawValue()));
+        ).subscribe(() => {
+            if ( detect ) {
+                this.changeRelationValue(this.form.getRawValue());
+            } else {
+                this.preValues = this.form.getRawValue();
+            }
+        });
 
-        this.relationChanges.pipe(
-            takeUntil(this.changeEnd$)
-        ).subscribe(values => this.form.setValue(values, { emitEvent: false }));
+        if ( detect ) {
+            this.relationChanges.pipe(
+                takeUntil(this.changeEnd$)
+            ).subscribe(values => this.form.setValue(values, { emitEvent: false }));
+        }
     }
 
     // =====================================================================================

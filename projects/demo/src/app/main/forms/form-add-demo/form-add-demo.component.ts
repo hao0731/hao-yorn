@@ -49,11 +49,9 @@ export class FormAddDemoComponent extends CommonFormTemplateComponent {
     }
 
     private addCollection(): void {
-        const elements = this.formFrame.elements;
-        const idx = elements[elements.length - 1].idx + 1;
         const element = new FormElementCollection(
             {
-                idx,
+                idx: 1,
                 key: 'newCollection',
                 configs: {
                     label: 'New Block',

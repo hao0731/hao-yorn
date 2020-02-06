@@ -27,6 +27,12 @@ export class ElementsBase extends ElementBase {
     }
 
     public addElement(element: any): void {
+        const idx = this.elements.findIndex(x => x.idx === element.idx);
+        if ( idx !== -1 ) {
+            for ( let i = idx; i < this.elements.length; i++ ) {
+                this.elements[i].idx++;
+            }
+        }
         this.elements.push(element);
         this.sortElements();
     }

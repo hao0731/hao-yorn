@@ -96,6 +96,12 @@ export class FormFrame {
         if ( !target ) {
             const control = this.createFormControl(element);
             this.form.addControl(element.key, control);
+            const idx = this.elements.findIndex(x => x.idx === element.idx);
+            if ( idx !== -1 ) {
+                for ( let i = idx; i < this.elements.length; i++ ) {
+                    this.elements[i].idx++;
+                }
+            }
             this.elements.push(element);
         } else if ( target instanceof FormElementGroup && element instanceof FormElement ) {
             const control = this.createFormControl(element);

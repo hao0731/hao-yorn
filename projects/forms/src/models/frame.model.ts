@@ -45,7 +45,8 @@ export class FormFrame {
      */
     public changeRelationValue(values: any): void {
         this.relationList.forEach(relation => {
-            const { base, targets, method, conditionFunc } = relation;
+            const { base, targets, method, options } = relation;
+            const { value, conditionFunc } = options;
             switch ( method ) {
                 case RelationMethod.DISABLED:
                     this.doDisabled(targets, conditionFunc());
@@ -55,7 +56,7 @@ export class FormFrame {
                     break;
                 default:
                     if ( conditionFunc() ) {
-                        this.doDataBinding(method, values, base, targets);
+                        this.doDataBinding(method, values, base, targets, value);
                     }
             }
         });
@@ -78,8 +79,9 @@ export class FormFrame {
      * @param detect excute changeRelationValue.
      */
     public addFieldRelation(relation: IfRelation, detect?: boolean): void {
-        if ( !relation.conditionFunc ) {
-            relation.conditionFunc = () => {
+        if ( !relation.options || !relation.options.conditionFunc ) {
+            relation.options = relation.options || {};
+            relation.options.conditionFunc = () => {
                 return true;
             };
         }
@@ -247,8 +249,9 @@ export class FormFrame {
      * @param values form rawValues.
      * @param base the base element's path.
      * @param targets the target elements' path.
+     * @param value When method is SET_VALUE, targets change this value.
      */
-    private doDataBinding(method: RelationMethod, values: any, base: string[], targets: string[][]): void {
+    private doDataBinding(method: RelationMethod, values: any, base: string[], targets: string[][], value: any): void {
         const baseModel = this.findElement(base);
         const targetModels = targets.map(target => this.findElement(target));
         const baseMap = this.getModelMap(baseModel);
@@ -257,6 +260,9 @@ export class FormFrame {
         const preBaseVal = _.get(this.preValues, baseMap);
 
         switch ( method ) {
+            case RelationMethod.SET_VALUE:
+                this.doSetSpecValue(values, { targetModels, targetMaps, value });
+                break;
             case RelationMethod.ONE_WAY_BINDING:
                 this.doOneWayBinding(values, { baseModel, targetModels, targetMaps, baseVal, preBaseVal });
                 break;
@@ -267,12 +273,27 @@ export class FormFrame {
     }
 
     /**
+     * Let targets' value change to specific value.
+     * @param values form rawValues.
+     * @param info include targetModels, targetMaps, value.
+     */
+    private doSetSpecValue(values: any, info: any): void {
+        const { targetModels, targetMaps, value } = info;
+        const changeValue = value && {}.toString.call(value) === '[object Function]' ? value() : value;
+        targetMaps.forEach((m: string[], idx: number) => {
+            _.set(values, m, changeValue);
+            targetModels[idx].value = changeValue;
+        });
+    }
+
+    /**
      * Let targets' value be based on base's value.
      * @param values form rawValues.
-     * @param info include baseModel, targetModels, targetMaps, baseVal.
+     * @param info include baseModel, targetModels, targetMaps, baseVal, preBaseVal.
      */
     private doOneWayBinding(values: any, info: any): void {
-        const { baseModel, targetModels, targetMaps, baseVal } = info;
+        const { baseModel, targetModels, targetMaps, baseVal, preBaseVal } = info;
+        if ( _.isEqual(baseVal, preBaseVal) ) { return; }
         baseModel.value = baseVal;
         targetMaps.forEach((m: string[], idx: number) => {
             const newValue = baseModel instanceof FormElementCollection && targetModels[idx] instanceof FormElementCollection

@@ -32,7 +32,9 @@ export class FormBuilderDemoComponent extends CommonFormTemplateComponent {
                     ['second-collection']
                 ],
                 method: RelationMethod.DISABLED,
-                conditionFunc: () => !Boolean(this.form.get(['first-collection', 'name']).value)
+                options: {
+                    conditionFunc: () => !Boolean(this.form.get(['first-collection', 'name']).value)
+                }
             }
         ]);
         this.ready();

@@ -23,5 +23,10 @@ export interface IfRelation {
     base: string[];
     targets: string[][];
     method: RelationMethod;
+    options?: IfRelationOptions;
+}
+
+export interface IfRelationOptions {
+    value?: any;
     conditionFunc?: () => boolean;
 }

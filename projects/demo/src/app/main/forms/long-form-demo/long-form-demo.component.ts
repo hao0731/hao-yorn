@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isEqual } from 'lodash';
 
 import { FormFrame, ElementsBuilder, IfRelation, RelationMethod } from 'forms';
 
@@ -31,24 +31,21 @@ export class LongFormDemoComponent extends CommonFormTemplateComponent {
         const relationList: IfRelation[] = [
             {
                 idx: 1,
-                base: ['first-collection', 'show2'],
-                targets: [['first-collection', 'number']],
-                method: RelationMethod.HIDDEN,
-                conditionFunc: () => !this.form.get(['first-collection', 'show2']).value
-            },
-            {
-                idx: 2,
                 base: ['second-collection'],
                 targets: [['third-collection']],
                 method: RelationMethod.TWO_WAY_BINDING,
-                conditionFunc: () => this.form.get(['third-collection', 'sameAs']).value
+                options: {
+                    conditionFunc: () => this.form.get(['third-collection', 'sameAs']).value
+                }
             },
             {
                 idx: 3,
                 base: ['forth-collection', 'address'],
                 targets: [['forth-collection', 'contactAddress']],
                 method: RelationMethod.TWO_WAY_BINDING,
-                conditionFunc: () => this.form.get(['forth-collection', 'sameAs']).value
+                options: {
+                    conditionFunc: () => this.form.get(['forth-collection', 'sameAs']).value
+                }
             }
         ];
         this.formFrame.setFieldRelations(relationList);

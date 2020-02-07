@@ -39,33 +39,6 @@ const ShowCheckbox1: IfElementOptions<boolean> = {
     }
 };
 
-const ShowCheckbox2: IfElementOptions<boolean> = {
-    idx: 4,
-    key: 'show2',
-    elementType: ElementType.INPUT_CHECKBOX,
-    value: false,
-    configs: {
-        placeholder: 'Show 2'
-    }
-};
-
-const NumberInput: IfElementOptions<number> = {
-    idx: 5,
-    key: 'number',
-    elementType: ElementType.INPUT_NUMBER,
-    value: 0,
-    validations: {
-        required: true,
-        min: 1,
-        max: 100
-    },
-    configs: {
-        label: 'number',
-        placeholder: 'Enter Number...',
-        hidden: true
-    }
-};
-
 export const LongFirstCollection = {
     type: ClassType.COLLECTION,
     param: {
@@ -78,9 +51,7 @@ export const LongFirstCollection = {
         elements: [
             NameInput,
             AgreeCheckBox,
-            ShowCheckbox1,
-            ShowCheckbox2,
-            NumberInput
+            ShowCheckbox1
         ]
     } as IfCollectionsOptions
 };
